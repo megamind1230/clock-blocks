@@ -1,0 +1,55 @@
+* Plan: Clock Blocks — Time Blocking App
+
+** TODO [#A] Create project scaffold
+    - [X] Create ~/magnus/clock-blocks/logs/ for runtime logs
+    - [X] Write index.html (single-file app, all inline)
+    - [X] Write README.org, changelog.org, bugs.org, plan-todos.org
+
+** TODO [#A] Implement core HTML structure
+    - [X] Header: "Clock Blocks" title + auto-filled date
+    - [X] Two canvas elements for AM / PM analog clocks
+    - [X] Task input: text box + Add button
+    - [X] File upload for .txt bulk import
+    - [X] Time-blocked task list (color swatch + delete per item)
+    - [X] Core tasks section (3 max, inline-editable checkboxes)
+    - [X] Todo section (6 max, inline-editable checkboxes)
+
+** TODO [#A] Implement CSS styling
+    - [X] Pastel mint green background
+    - [X] Orange accent for clocks, title, outlines
+    - [X] Purple accent for dividers and section headers
+    - [X] Responsive grid layout (clocks side by side)
+    - [X] Minimal planner aesthetic
+
+** TODO [#A] Implement clock rendering (Canvas 2D)
+    - [X] Draw clock face: orange circle outline, numbers 12/3/6/9
+    - [X] Draw live hour/minute/second hands from system time
+    - [X] Draw colored arc sectors for time blocks
+    - [X] Update every second via requestAnimationFrame
+
+** TODO [#A] Implement task parser
+    - [X] Parse "05am:08am doing warmups" format
+    - [X] Convert 12h AM/PM to 24h internal format
+    - [X] Validate: start < end, non-empty label
+    - [X] Assign color from palette sequentially
+
+** TODO [#A] Implement localStorage persistence
+    - [X] Save/load time-blocked tasks
+    - [X] Save/load core tasks + checked state
+    - [X] Save/load todo items + checked state
+    - [X] Restore on page load
+
+** TODO [#A] Implement .txt file import
+    - [X] Accept .txt via file input
+    - [X] Parse line by line, skip invalid, add valid
+    - [X] Show count of added/skipped
+
+** TODO [#A] Handle edge cases
+    - [X] 12am → 0, 12pm → 12 in 24h
+    - [X] Blocks spanning AM/PM boundary split across both clocks
+    - [X] Overlapping blocks drawn in add-order (last on top)
+    - [X] Empty input validation (no empty tasks)
+
+** TODO [#B] Polish
+    - [X] Add a reset/clear-all button
+    - [X] Dark mode?

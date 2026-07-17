@@ -1,0 +1,36 @@
+* Changelog
+
+** 2026-07-17 — v0.4.0 — Clock highlights, core priority, tooltips, dark mode
+
+- Renamed app title from "time blocking" to "Clock Blocks"
+- All 12 hour numbers on analog clocks (was 12/3/6/9 only)
+- Active-period clock (AM or PM) highlighted with a square orange outline
+- Core-sections tasks turn red on the clocks for visual priority
+- Hover tooltips on clock blocks showing the task name
+- Reset button (↻) at top right to clear all localStorage data
+- Dark mode toggle (🌙/☀️) with persisted preference
+
+** 2026-07-16 — v0.3.0 — Done section + CRUD
+
+- Task checkboxes: checking a task moves it to the dedicated Done section (dimmed, bottom of page)
+- Done tasks hidden from clocks, task list, drag targets
+- Un-checking restores the task to active list
+- Edit button (✎) on each task → inline edit mode (re-parses the format string)
+- updateTask() for full CRUD: label, time range, all fields editable
+- Backward compat: legacy tasks get `done: false` on load
+
+** 2026-07-16 — v0.2.0 — Drag & drop
+
+- Drag time-blocked tasks into Core or Todo checklists
+- Drag checklist items between Core and Todo sections
+- Visual drag feedback: grab cursor, opacity reduction, purple drop-target highlight
+- `loadChecklist` now supports variable-length arrays (no padding when count omitted)
+
+** 2026-07-16 — v0.1.0 — Initial release
+
+- Two live analog clocks (AM/PM) with colored time-block arcs
+- Task input (text box + .txt file upload)
+- Core tasks (3 max) and Todo (6 max) sections
+- Auto-filled current date
+- localStorage persistence for all data
+- Single-file architecture (index.html)

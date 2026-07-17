@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clock Blocks</title>
+<style>
+:root {
+  --bg: #e8f5e9;
+  --surface: #fff;
+  --text: #333;
+  --text-muted: #888;
+  --border: #ddd;
+  --accent: #ff8c42;
+  --purple: #7b4ea3;
+}
+body.dark {
+  --bg: #1a1a2e;
+  --surface: #2a2a3e;
+  --text: #e0e0e0;
+  --text-muted: #999;
+  --border: #444;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  font-family: system-ui, -apple-system, sans-serif;
+  color: var(--text);
+  padding: 24px 16px;
+  min-height: 100vh;
+  position: relative;
+  transition: background .2s, color .2s;
+}
+#dark-btn, #reset-btn {
+  position: absolute;
+  top: 12px;
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  line-height: 1;
+  color: #999;
+}
+#reset-btn { right: 12px; font-size: 1.6rem; }
+#dark-btn { right: 44px; }
+#reset-btn:hover { color: #e74c3c; }
+#dark-btn:hover { color: var(--accent); }
+.container { max-width: 720px; margin: 0 auto; }
+
+h1 {
+  text-align: center;
+  color: var(--accent);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  margin-bottom: 2px;
+}
+.date {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-bottom: 18px;
+}
+
+.clocks {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.clock-wrapper { text-align: center; }
+.clock-wrapper.highlight { outline: 3px solid var(--accent); border-radius: 8px; padding: 4px; }
+.clock-label {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+  letter-spacing: 1px;
+}
+canvas { display: block; }
+#clock-tip {
+  position: fixed;
+  pointer-events: none;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  display: none;
+  z-index: 10;
+}
+
+/* ---- input row ---- */
+.input-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+  align-items: center;
+}
+.input-row input[type="text"] {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: monospace;
+  background: var(--surface);
+  color: var(--text);
+  transition: background .2s, color .2s, border-color .2s;
+}
+.input-row input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.input-row button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.input-row button.upload {
+  background: #bbb;
+}
+body.dark .input-row button.upload { background: #555; }
+#upload-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+/* ---- task list ---- */
+#task-list { margin: 6px 0 0 0; }
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 13px;
+}
+.color-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+.task-time {
+  font-family: monospace;
+  color: var(--text-muted);
+  font-size: 12px;
+  min-width: 85px;
+}
+.task-label { flex: 1; }
+.delete-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #ccc;
+  font-size: 15px;
+  padding: 0 2px;
+  line-height: 1;
+}
+body.dark .delete-btn { color: #666; }
+.delete-btn:hover { color: #e74c3c; }
+
+/* ---- sections divider ---- */
+.divider {
+  border: none;
+  border-top: 3px solid var(--purple);
+  margin: 14px 0 10px 0;
+  opacity: 0.6;
+}
+
+/* ---- core / todo grids ---- */
+.sections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+}
+.section {
+  padding: 0 8px 0 0;
+}
+.section:last-child {
+  padding: 0 0 0 8px;
+  border-left: 2px solid var(--purple);
+}
+.section h2 {
+  text-align: center;
+  color: var(--purple);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+.checklist-item input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  border: 2px solid var(--purple);
+  border-radius: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.checklist-item input[type="checkbox"]:checked {
+  background: var(--purple);
+  border-color: var(--purple);
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 8l3 3 5-5' stroke='white' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.checklist-item input[type="text"] {
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  flex: 1;
+  padding: 3px 0;
+  font-family: inherit;
+  color: var(--text);
+  min-width: 0;
+  transition: color .2s;
+}
+.checklist-item input[type="text"]:focus {
+  outline: none;
+  border-bottom: 1px dashed var(--border);
+}
+
+/* ---- empty state ---- */
+.empty-state {
+  text-align: center;
+  color: #ccc;
+  font-size: 12px;
+  font-style: italic;
+  padding: 8px 0;
+}
+body.dark .empty-state { color: #555; }
+
+/* ---- drag and drop ---- */
+.task-item[draggable="true"] { cursor: grab; }
+.task-item[draggable="true"]:active { cursor: grabbing; }
+.task-item.dragging { opacity: 0.4; }
+.checklist-droppable.drag-over {
+  background: rgba(123, 78, 163, 0.1);
+  border-radius: 4px;
+  min-height: 20px;
+}
+
+/* ---- done section ---- */
+.done-section { margin-top: 12px; }
+.done-section h2 {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-weight: 400;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+  text-transform: lowercase;
+}
+.task-item.done { opacity: 0.35; }
+.task-item.done .color-dot { filter: grayscale(0.6); }
+.task-item.done .task-label { color: var(--text-muted); }
+
+/* ---- edit mode ---- */
+.edit-btn {
+  background: none; border: none; cursor: pointer;
+  color: #aaa; font-size: 14px; padding: 0 4px;
+}
+body.dark .edit-btn { color: #666; }
+.edit-btn:hover { color: var(--text); }
+.edit-input {
+  flex: 1; padding: 4px 6px;
+  border: 1.5px solid var(--accent); border-radius: 3px;
+  font-size: 12px; font-family: monospace;
+  background: var(--surface);
+  color: var(--text);
+}
+.edit-input:focus { outline: none; }
+
+/* ---- responsive ---- */
+@media (max-width: 500px) {
+  .clocks { gap: 10px; }
+  canvas { width: 160px; height: 160px; }
+  .sections { grid-template-columns: 1fr; }
+  .section:last-child { border-left: none; padding: 0; }
+}
+</style>
+</head>
+<body>
+  <button id="dark-btn" title="Toggle dark mode">🌙</button>
+  <button id="reset-btn" title="Reset all data">↻</button>
+  <div class="container">
+    <h1>Clock Blocks</h1>
+    <div class="date" id="date"></div>
+
+  <div class="clocks">
+    <div class="clock-wrapper">
+      <div class="clock-label">AM</div>
+      <canvas id="am-clock" width="240" height="240"></canvas>
+    </div>
+    <div class="clock-wrapper">
+      <div class="clock-label">PM</div>
+      <canvas id="pm-clock" width="240" height="240"></canvas>
+    </div>
+    <div id="clock-tip"></div>
+  </div>
+
+  <div class="input-row">
+    <input type="text" id="task-input" placeholder='05am:08am doing warmups' autocomplete="off">
+    <button id="add-btn">Add</button>
+    <button class="upload" id="upload-btn">Upload</button>
+    <input type="file" id="file-input" accept=".txt" hidden>
+  </div>
+  <div id="upload-hint">Upload a .txt file with one task per line</div>
+
+  <div id="task-list"></div>
+
+  <hr class="divider">
+
+  <div class="sections">
+    <div class="section">
+      <h2>core</h2>
+      <div id="core-list"></div>
+    </div>
+    <div class="section">
+      <h2>todo</h2>
+      <div id="todo-list"></div>
+    </div>
+  </div>
+
+  <hr class="divider">
+  <div class="done-section">
+    <h2>done</h2>
+    <div id="done-list"></div>
+  </div>
+</div>
+
+<script>
+// ================ Config ================
+const COLORS = [
+  '#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6',
+  '#1abc9c', '#e67e22', '#34495e', '#16a085', '#c0392b',
+];
+const STORAGE = {
+  TASKS: 'cb_tasks',
+  CORE:  'cb_core',
+  TODO:  'cb_todo',
+  IDX:   'cb_idx',
+};
+
+// ================ Logging ================
+const log = (...args) => console.log(`[cb ${new Date().toLocaleTimeString()}]`, ...args);
+
+// ================ Date ================
+document.getElementById('date').textContent =
+  new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'long', day: 'numeric', year: 'numeric' });
+
+// ================ Task Parser ================
+// //#baka regex extracts start/end times and label from "05am:08am doing warmups"
+const TASK_RE = /^(\d{1,2})(am|pm):(\d{1,2})(am|pm)\s+(.+)$/i;
+
+function to24(h, mer) {
+  mer = mer.toLowerCase();
+  if (mer === 'am') return h === 12 ? 0 : h;
+  return h === 12 ? 12 : h + 12;
+}
+
+function fmt12(h24) {
+  const h = h24 % 24;
+  if (h === 0) return '12am';
+  if (h < 12) return h + 'am';
+  if (h === 12) return '12pm';
+  return (h - 12) + 'pm';
+}
+
+function parseTask(str) {
+  const m = str.trim().match(TASK_RE);
+  if (!m) return null;
+  let s = to24(+m[1], m[2]);
+  let e = to24(+m[3], m[4]);
+  if (e <= s) e += 24;
+  if (e - s > 24 || e - s <= 0) return null;
+  // //#baka each task gets a unique id for delete/lookup
+  return { id: Date.now() + '_' + Math.random().toString(36).slice(2, 6), start24: s, end24: e, label: m[5].trim(), startLabel: m[1]+m[2].toLowerCase(), endLabel: m[3]+m[4].toLowerCase(), done: false };
+}
+
+// ================ Task State ================
+let tasks = [];
+let colorIdx = 0;
+
+function loadTasks() {
+  try {
+    tasks = JSON.parse(localStorage.getItem(STORAGE.TASKS)) || [];
+    tasks.forEach(t => { if (t.done === undefined) t.done = false; });
+    colorIdx = parseInt(localStorage.getItem(STORAGE.IDX)) || 0;
+    log('Loaded', tasks.length, 'tasks');
+  } catch (e) { tasks = []; }
+}
+function saveTasks() {
+  localStorage.setItem(STORAGE.TASKS, JSON.stringify(tasks));
+  localStorage.setItem(STORAGE.IDX, colorIdx);
+}
+
+function addTask(str) {
+  const t = parseTask(str);
+  if (!t) return null;
+  t.color = COLORS[colorIdx % COLORS.length];
+  colorIdx++;
+  tasks.push(t);
+  saveTasks();
+  renderAll();
+  log('Added task:', t.label);
+  return t;
+}
+
+function removeTask(id) {
+  tasks = tasks.filter(t => t.id !== id);
+  saveTasks();
+  renderAll();
+  log('Removed task:', id);
+}
+
+// ================ Clock Drawing ================
+const amCanvas = document.getElementById('am-clock');
+const pmCanvas = document.getElementById('pm-clock');
+const amCtx = amCanvas.getContext('2d');
+const pmCtx = pmCanvas.getContext('2d');
+const CW = amCanvas.width, CH = amCanvas.height;
+const CX = CW/2, CY = CH/2, R = Math.min(CW, CH)/2 - 12;
+
+// //#baka split midnight-crossing blocks so each sub-block stays in [0,24]
+function getDrawableParts(t) {
+  let s = t.start24, e = t.end24;
+  if (e > 24) {
+    return [
+      { ...t, start24: s, end24: 24 },
+      { ...t, start24: 0, end24: e - 24 },
+    ];
+  }
+  return [t];
+}
+
+function getCoreTaskIds() {
+  const items = loadChecklist(STORAGE.CORE);
+  const ids = new Set();
+  items.forEach(item => {
+    const t = tasks.find(t => item.text === t.label + ' (' + t.startLabel + '\u2013' + t.endLabel + ')');
+    if (t) ids.add(t.id);
+  });
+  return ids;
+}
+
+function drawSingleClock(ctx, isPM) {
+  ctx.clearRect(0, 0, CW, CH);
+
+  // -- time blocks --
+  // //#baka walk each task, find overlap with this clock's half-day, draw sector
+  const coreIds = getCoreTaskIds();
+  tasks.forEach(task => {
+    if (task.done) return;
+    const color = coreIds.has(task.id) ? '#e74c3c' : task.color;
+    getDrawableParts(task).forEach(part => {
+      let cStart = isPM ? Math.max(part.start24, 12) : Math.max(part.start24, 0);
+      let cEnd   = isPM ? Math.min(part.end24, 24)   : Math.min(part.end24, 12);
+      if (cStart >= cEnd) return;
+      ctx.beginPath();
+      if (cEnd - cStart >= 12) {
+        ctx.arc(CX, CY, R - 4, 0, Math.PI * 2);
+      } else {
+        const pStart = cStart % 12;
+        const pEnd   = cEnd   % 12;
+        const aStart = (pStart/12) * Math.PI * 2 - Math.PI/2;
+        const aEnd   = (pEnd/12)   * Math.PI * 2 - Math.PI/2;
+        ctx.moveTo(CX, CY);
+        ctx.arc(CX, CY, R - 4, aStart, aEnd);
+      }
+      ctx.closePath();
+      ctx.fillStyle = color + '44';
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    });
+  });
+
+  // -- clock face (orange circle + 4 numbers) --
+  ctx.beginPath();
+  ctx.arc(CX, CY, R, 0, Math.PI * 2);
+  ctx.strokeStyle = '#ff8c42';
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+
+  ctx.fillStyle = '#ff8c42';
+  ctx.font = 'bold 15px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  const nums = Array.from({ length: 12 }, (_, i) => ({
+    v: i === 0 ? 12 : i,
+    a: (i / 12) * Math.PI * 2 - Math.PI / 2,
+  }));
+  nums.forEach(n => {
+    ctx.fillText(n.v, CX + Math.cos(n.a) * (R - 18), CY + Math.sin(n.a) * (R - 18));
+  });
+
+  // -- hands (live system time) --
+  const now = new Date();
+  const hh = (now.getHours() % 12) + now.getMinutes() / 60 + now.getSeconds() / 3600;
+  const mm = now.getMinutes() + now.getSeconds() / 60;
+  const ss = now.getSeconds();
+
+  // //#baka hour/minute/second angles: (fraction_of_12h) * 2π - π/2 offset so 12 is at top
+  const ha = (hh / 12) * Math.PI * 2 - Math.PI / 2;
+  const ma = (mm / 60) * Math.PI * 2 - Math.PI / 2;
+  const sa = (ss / 60) * Math.PI * 2 - Math.PI / 2;
+
+  // hour
+  ctx.beginPath();
+  ctx.moveTo(CX, CY);
+  ctx.lineTo(CX + Math.cos(ha) * R * 0.45, CY + Math.sin(ha) * R * 0.45);
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 4.5;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // minute
+  ctx.beginPath();
+  ctx.moveTo(CX, CY);
+  ctx.lineTo(CX + Math.cos(ma) * R * 0.65, CY + Math.sin(ma) * R * 0.65);
+  ctx.strokeStyle = '#333';
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // second
+  ctx.beginPath();
+  ctx.moveTo(CX - Math.cos(sa) * R * 0.12, CY - Math.sin(sa) * R * 0.12);
+  ctx.lineTo(CX + Math.cos(sa) * R * 0.75, CY + Math.sin(sa) * R * 0.75);
+  ctx.strokeStyle = '#e74c3c';
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  // center dot
+  ctx.beginPath();
+  ctx.arc(CX, CY, 3.5, 0, Math.PI * 2);
+  ctx.fillStyle = '#333';
+  ctx.fill();
+}
+
+function drawClocks() {
+  drawSingleClock(amCtx, false);
+  drawSingleClock(pmCtx, true);
+  const now = new Date();
+  const isAM = now.getHours() < 12;
+  document.querySelectorAll('.clock-wrapper').forEach(el => el.classList.remove('highlight'));
+  document.querySelector(isAM ? '.clocks :first-child' : '.clocks :last-child').classList.add('highlight');
+}
+
+function getTaskAt(canvas, e, isPM) {
+  const rect = canvas.getBoundingClientRect();
+  const sx = canvas.width / rect.width;
+  const sy = canvas.height / rect.height;
+  const mx = (e.clientX - rect.left) * sx;
+  const my = (e.clientY - rect.top) * sy;
+  const dx = mx - CX, dy = my - CY;
+  if (Math.sqrt(dx*dx + dy*dy) > R - 4) return null;
+  let p = (Math.atan2(dy, dx) + Math.PI/2) / (Math.PI * 2) * 12;
+  if (p < 0) p += 12;
+  for (const task of tasks) {
+    if (task.done) continue;
+    for (const part of getDrawableParts(task)) {
+      let cS = isPM ? Math.max(part.start24, 12) : Math.max(part.start24, 0);
+      let cE = isPM ? Math.min(part.end24, 24)   : Math.min(part.end24, 12);
+      if (cS >= cE) continue;
+      const ps = cS % 12, pe = cE % 12;
+      if (ps < pe) { if (p >= ps && p < pe) return task; }
+      else { if (p >= ps || p < pe) return task; }
+    }
+  }
+  return null;
+}
+
+[amCanvas, pmCanvas].forEach((c, i) => {
+  const isPM = i === 1;
+  c.addEventListener('mousemove', e => {
+    const tip = document.getElementById('clock-tip');
+    const task = getTaskAt(c, e, isPM);
+    if (task) {
+      tip.textContent = task.label;
+      tip.style.left = (e.clientX + 12) + 'px';
+      tip.style.top = (e.clientY - 8) + 'px';
+      tip.style.display = 'block';
+    } else tip.style.display = 'none';
+  });
+  c.addEventListener('mouseleave', () => {
+    document.getElementById('clock-tip').style.display = 'none';
+  });
+});
+
+// ================ Checklist (Core / Todo) ================
+function loadChecklist(key, count) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(key));
+    if (raw !== null && count === undefined) return raw;
+    const items = raw || [];
+    if (count !== undefined) while (items.length < count) items.push({ text: '', done: false });
+    return items;
+  } catch { return Array.from({ length: count || 0 }, () => ({ text: '', done: false })); }
+}
+function saveChecklist(key, items) {
+  localStorage.setItem(key, JSON.stringify(items));
+}
+
+// //#baka re-render both checklists from localStorage state
+function renderChecklists() {
+  ['core', 'todo'].forEach(section => {
+    const key = section === 'core' ? STORAGE.CORE : STORAGE.TODO;
+    const count = section === 'core' ? 3 : 6;
+    let items = loadChecklist(key, count);
+    const container = document.getElementById(section + '-list');
+    container.className = 'checklist-droppable';
+    container.ondragover = handleDragOver;
+    container.ondragleave = handleDragLeave;
+    container.ondrop = e => handleDrop(e, section);
+    container.innerHTML = '';
+    items.forEach((item, i) => {
+      const div = document.createElement('div');
+      div.className = 'checklist-item';
+      div.draggable = true;
+      div.ondragstart = e => handleDragStart(e, section + ':' + i, 'checklist');
+      div.ondragend = handleDragEnd;
+      if (item.text.trim()) {
+        const cb = document.createElement('input');
+        cb.type = 'checkbox';
+        cb.checked = item.done;
+        cb.addEventListener('change', () => {
+          items[i].done = cb.checked;
+          saveChecklist(key, items);
+        });
+        div.appendChild(cb);
+      }
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.value = item.text;
+      inp.addEventListener('input', () => {
+        items[i].text = inp.value;
+        saveChecklist(key, items);
+      });
+      div.appendChild(inp);
+      container.appendChild(div);
+    });
+  });
+}
+
+// ================ Drag & Drop ================
+function handleDragStart(e, id, type) {
+  e.dataTransfer.setData('text/plain', type + ':' + id);
+  e.dataTransfer.effectAllowed = 'move';
+  e.target.classList.add('dragging');
+}
+function handleDragEnd(e) {
+  e.target.classList.remove('dragging');
+}
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function handleDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function handleDrop(e, section) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  const raw = e.dataTransfer.getData('text/plain');
+  if (!raw) return;
+  const [type, ...rest] = raw.split(':');
+  const key = section === 'core' ? STORAGE.CORE : STORAGE.TODO;
+  let items = loadChecklist(key);
+  if (type === 'task') {
+    const task = tasks.find(t => t.id === rest.join(':'));
+    if (!task) return;
+    items.push({ text: task.label + ' (' + task.startLabel + '\u2013' + task.endLabel + ')', done: false });
+  } else if (type === 'checklist') {
+    const fromSection = rest[0];
+    const fromIdx = parseInt(rest[1]);
+    if (fromSection === section || isNaN(fromIdx)) return;
+    const fromKey = fromSection === 'core' ? STORAGE.CORE : STORAGE.TODO;
+    let fromItems = loadChecklist(fromKey);
+    const moved = fromItems.splice(fromIdx, 1)[0];
+    if (!moved || !moved.text) return;
+    saveChecklist(fromKey, fromItems);
+    items.push(moved);
+  } else return;
+  saveChecklist(key, items);
+  renderChecklists();
+}
+
+// ================ Task Editing ================
+const editingTasks = new Set();
+function startEdit(id) { editingTasks.add(id); renderTaskList(); }
+function saveEdit(id, raw) {
+  if (updateTask(id, raw)) editingTasks.delete(id);
+  renderAll();
+}
+function cancelEdit(id) { editingTasks.delete(id); renderTaskList(); }
+function updateTask(id, raw) {
+  const p = parseTask(raw);
+  if (!p) return false;
+  const t = tasks.find(t => t.id === id);
+  if (!t) return false;
+  Object.assign(t, { start24: p.start24, end24: p.end24, label: p.label, startLabel: p.startLabel, endLabel: p.endLabel });
+  saveTasks();
+  return true;
+}
+
+// ================ Task List UI ================
+function renderTaskList() {
+  const container = document.getElementById('task-list');
+  const active = tasks.filter(t => !t.done);
+  if (active.length === 0) {
+    container.innerHTML = '<div class="empty-state">add a time block above</div>';
+    return;
+  }
+  container.innerHTML = '';
+  active.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'task-item';
+    div.draggable = true;
+    div.ondragstart = e => handleDragStart(e, t.id, 'task');
+    div.ondragend = handleDragEnd;
+
+    const doneCb = document.createElement('input');
+    doneCb.type = 'checkbox';
+    doneCb.className = 'done-check';
+    doneCb.checked = false;
+    doneCb.addEventListener('change', () => {
+      t.done = doneCb.checked;
+      saveTasks();
+      renderAll();
+    });
+    const dot = document.createElement('span');
+    dot.className = 'color-dot';
+    dot.style.background = t.color;
+
+    if (editingTasks.has(t.id)) {
+      const inp = document.createElement('input');
+      inp.type = 'text';
+      inp.className = 'edit-input';
+      inp.value = t.startLabel + ':' + t.endLabel + ' ' + t.label;
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter') saveEdit(t.id, inp.value);
+        if (e.key === 'Escape') cancelEdit(t.id);
+      });
+      const saveBtn = document.createElement('button');
+      saveBtn.className = 'edit-btn';
+      saveBtn.textContent = '\u2713';
+      saveBtn.addEventListener('click', () => saveEdit(t.id, inp.value));
+      const del = document.createElement('button');
+      del.className = 'delete-btn';
+      del.textContent = '\u2715';
+      del.addEventListener('click', () => removeTask(t.id));
+      div.appendChild(doneCb);
+      div.appendChild(dot);
+      div.appendChild(inp);
+      div.appendChild(saveBtn);
+      div.appendChild(del);
+      setTimeout(() => inp.focus(), 0);
+    } else {
+      const time = document.createElement('span');
+      time.className = 'task-time';
+      time.textContent = t.startLabel + ' \u2013 ' + t.endLabel;
+      const label = document.createElement('span');
+      label.className = 'task-label';
+      label.textContent = t.label;
+      const editBtn = document.createElement('button');
+      editBtn.className = 'edit-btn';
+      editBtn.textContent = '\u270E';
+      editBtn.addEventListener('click', () => startEdit(t.id));
+      const del = document.createElement('button');
+      del.className = 'delete-btn';
+      del.textContent = '\u2715';
+      del.addEventListener('click', () => removeTask(t.id));
+      div.appendChild(doneCb);
+      div.appendChild(dot);
+      div.appendChild(time);
+      div.appendChild(label);
+      div.appendChild(editBtn);
+      div.appendChild(del);
+    }
+    container.appendChild(div);
+  });
+}
+
+// ================ Done Section ================
+function renderDoneSection() {
+  const container = document.getElementById('done-list');
+  const done = tasks.filter(t => t.done);
+  if (done.length === 0) {
+    container.innerHTML = '<div class="empty-state">no completed tasks</div>';
+    return;
+  }
+  container.innerHTML = '';
+  done.forEach(t => {
+    const div = document.createElement('div');
+    div.className = 'task-item done';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'done-check';
+    cb.checked = true;
+    cb.addEventListener('change', () => {
+      t.done = cb.checked;
+      saveTasks();
+      renderAll();
+    });
+    const dot = document.createElement('span');
+    dot.className = 'color-dot';
+    dot.style.background = t.color;
+    const time = document.createElement('span');
+    time.className = 'task-time';
+    time.textContent = t.startLabel + ' \u2013 ' + t.endLabel;
+    const label = document.createElement('span');
+    label.className = 'task-label';
+    label.textContent = t.label;
+    const del = document.createElement('button');
+    del.className = 'delete-btn';
+    del.textContent = '\u2715';
+    del.addEventListener('click', () => removeTask(t.id));
+    div.appendChild(cb);
+    div.appendChild(dot);
+    div.appendChild(time);
+    div.appendChild(label);
+    div.appendChild(del);
+    container.appendChild(div);
+  });
+}
+
+function renderAll() {
+  renderTaskList();
+  renderDoneSection();
+  drawClocks();
+}
+
+// ================ File Upload ================
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const lines = e.target.result.split('\n').filter(l => l.trim());
+    let added = 0, skipped = 0;
+    lines.forEach(line => {
+      const result = addTask(line.trim());
+      if (result) added++; else skipped++;
+    });
+    log(`Upload: ${added} added, ${skipped} skipped`);
+  };
+  reader.readAsText(file);
+}
+
+// ================ Init ================
+localStorage.removeItem(STORAGE.CORE);
+localStorage.removeItem(STORAGE.TODO);
+loadTasks();
+renderAll();
+renderChecklists();
+
+// -- clock tick --
+setInterval(drawClocks, 1000);
+
+// -- UI bindings --
+document.getElementById('add-btn').addEventListener('click', () => {
+  const inp = document.getElementById('task-input');
+  const result = addTask(inp.value);
+  if (!result) {
+    inp.style.borderColor = '#e74c3c';
+    setTimeout(() => inp.style.borderColor = '', 600);
+  } else {
+    inp.value = '';
+  }
+});
+document.getElementById('task-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('add-btn').click();
+});
+// -- dark mode --
+function setDark(on) {
+  document.body.classList.toggle('dark', on);
+  document.getElementById('dark-btn').textContent = on ? '☀️' : '🌙';
+  localStorage.setItem('cb_dark', on ? '1' : '');
+}
+document.getElementById('dark-btn').addEventListener('click', () => setDark(!document.body.classList.contains('dark')));
+if (localStorage.getItem('cb_dark')) setDark(true);
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  if (!confirm('Reset all data?')) return;
+  localStorage.clear();
+  location.reload();
+});
+document.getElementById('upload-btn').addEventListener('click', () => {
+  document.getElementById('file-input').click();
+});
+document.getElementById('file-input').addEventListener('change', e => {
+  if (e.target.files[0]) handleFile(e.target.files[0]);
+  e.target.value = '';
+});
+
+log('App initialized');
+</script>
+</body>
+</html>
