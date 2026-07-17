@@ -64,7 +64,6 @@ Examples:
 - bugs.org          — known issues
 - changelog.org     — version history
 - mock.png          — original design mock
-- image-description.org — mock annotation
 
 ** Color Palette
 
