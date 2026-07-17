@@ -2,6 +2,9 @@
 
 ** 2026-07-17 — v0.4.0 — Clock highlights, core priority, tooltips, dark mode
 
+[[file:screenshots/clock-blocks-light-theme.png]]
+[[file:screenshots/dark-theme.png]]
+
 - Renamed app title from "time blocking" to "Clock Blocks"
 - All 12 hour numbers on analog clocks (was 12/3/6/9 only)
 - Active-period clock (AM or PM) highlighted with a square orange outline

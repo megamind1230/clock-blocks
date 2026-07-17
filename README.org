@@ -7,6 +7,11 @@ A single-file HTML app for time-blocking productivity. Enter tasks in the
 analog clocks (AM + PM). Includes a core-priority checklist and a general
 todo list. Tasks dragged to the core section turn red for visual priority.
 
+** Screenshots
+
+[[file:screenshots/clock-blocks-light-theme.png]]
+[[file:screenshots/dark-theme.png]]
+
 ** Features
 
 - Two live analog clocks (AM / PM) synced to system timezone
@@ -63,7 +68,9 @@ Examples:
 - plan-todos.org    — dev roadmap
 - bugs.org          — known issues
 - changelog.org     — version history
-- mock.png          — original design mock
+- screenshots/clock-blocks-light-theme.png — light theme screenshot
+- screenshots/dark-theme.png              — dark theme screenshot
+- screenshots/original-mock.png           — original design mock
 
 ** Color Palette
 
